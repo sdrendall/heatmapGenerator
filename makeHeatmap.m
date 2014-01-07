@@ -1,4 +1,24 @@
 function usrData = makeHeatmap(usrData)
+% creates a heatmap from 
+
+% --- check for insufficient data
+if isempty(usrData.imagePaths)
+    errordlg('No images loaded');
+    return
+end
+
+if isempty(usrData.cropWindow)
+    cropWindowSpecified = false;
+end
+
+if ~exist('usrData.threshold', 'var')
+    usrData.threshold = .1;
+end
+
+if ~exist('usrData.frameWindow', 'var')
+	usrData.frameWindow = 30;
+end
+	
 
 % --- get filepaths
 [videoName, videoPath] = uiputfile('*.avi', 'Save heatmap video as...');
@@ -7,6 +27,7 @@ function usrData = makeHeatmap(usrData)
 hmMov = VideoWriter([videoPath, videoName]);
 open(hmMov)
 
+% --- For each image
 for i = 1:length(usrData.imagePaths)
 % --- load image
     currIm = mat2gray(rgb2gray(imread(usrData.imagePaths{i})));
@@ -29,20 +50,20 @@ heatmap = heatmap + currIm;
 if i == 1
     % initialize container array
     [nr, nc] = size(currIm);
-    hmData = zeros(nr, nc, frameWindow);
+    hmData = zeros(nr, nc, usrData.frameWindow);
 end
 
 % create cycling index
-currIndex = mod(i, frameWindow);
+currIndex = mod(i, usrData.frameWindow);
 if currIndex == 0
-    currIndex = frameWindow;
+    currIndex = usrData.frameWindow;
 end
 
 % add current image to container array
 hmData(:,:,currIndex) = currIm;
 
 % create frames once container array is populated
-if i >= frameWindow
+if i >= usrData.frameWindow
     writeVideo(hmMov, im2frame(uint8(mat2gray(sum(hmData, 3))*255), hot(256)));
 end
 end
